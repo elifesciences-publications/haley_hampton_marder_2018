@@ -1,0 +1,358 @@
+'***************************************************************************************************************************
+'***************************************************************************************************************************
+'***************************************************************************************************************************
+'PART ONE:
+
+'OPEN FILES TO ANALYZE, START OUTPUT FILES, ASK USER INTRODUCTORY QUESTIONS....
+
+'---------------------------------------------------------------------------------------------------------------------------
+
+'OPEN FILE PATH AND GET FILENAMES OF FILES TO ANALYZE
+var path$, fname$, fend$, nFiles%, Fnames$[1000], fcount%, file%; 'file variables
+var okOpen%, ok%, okAnalyze%, okSpikes%, okSave%, okBursts%; 'prompt variables
+okOpen%:=FileOpen("",0); 'opens menu to select directory and .smr file, "ok" opens selected file
+path$:=FilePath$(0); 'save file path
+fname$:=FileName$(3); 'get the file name of the selected file
+fend$:=FileName$(4);
+fname$:=fname$+fend$+".smr"; 'filename (e.g. 877_021_0000.smr)
+FilePathSet(path$); 'set file path
+nFiles%:= FileList (Fnames$[], 0); 'get number of files in path (only .smr)
+
+'---------------------------------------------------------------------------------------------------------------------------
+
+'ASK USER DETAILS ABOUT THE EXPERIMENT
+FrontView(okOpen%);
+WindowVisible(3);
+XRange(0,60);
+Optimise(-1);
+ChanShow(-1);
+DlgCreate("Experiment Details");
+DlgString(1, "Your name (e.g. jhaley).", 50);
+DlgString(2, "The date of the experiment (e.g. 08.22.16).", 50);
+DlgString(3, "Manipulation (e.g. control; pH)?", 5000);
+DlgString(4, "Any other comments?", 5000);
+DlgInteger(5, "How many neurons would you like to compare?",1,10);
+var experimenter$, dated$, manipulation$, comment$, nNeuron%;
+ok% := DlgShow(experimenter$, dated$, manipulation$, comment$, nNeuron%);
+if not ok% then Halt(); endif;
+
+'---------------------------------------------------------------------------------------------------------------------------
+
+'ASK USER ABOUT NEURONS TO ANALYZE AND CREATE OUTPUT FILES FOR SPIKES AND BURSTS
+var neuronname$[10]; 'string array of neuron names (up to 10)
+var inputchannel%[10]; 'integer array of input channels (up to 10)
+var oldchannel%[10], sTime, eTime; 'integer array of existing memory channels (up to 10)
+var eventchannel%[10]; 'integer array of event channels (up to 10)
+var burstchannel%[10]; 'integer array of burst channels (up to 10)
+var minthreshold[10], maxthreshold[10], mindelay%:=0.01, mode%, i%, largeSpikes%, nLarge%; 'set parameters for spike counting
+var spkInterval[10],minSpike%[10],nBursts%[10],burststart[100000],burstend[100000]; 'set parameters for burst counting
+var singleburst%, code%[4], spikeCount%[100000], burstSpikes[100000], lrgSpikes[100000];
+var spikeTimes[100000], nSpikes%[10], printer%, list%[100]; 'integer array to save spike times and number of spikes
+var unitcounter%, burstfile%[10], spikefile%[10], outfile%; 'neuron # being analyzed & output files
+for unitcounter%:=0 to nNeuron%-1 step 1 do ' for neurons 1 to # of neurons
+    spkInterval[unitcounter%]:=0.3; minSpike%[unitcounter%]:=2; 'set initial burst settings for all units
+    FrontView(okOpen%); WindowVisible(3);
+    XRange(0,60); Optimise(-1); ChanShow(-1);
+    DlgCreate("Select channel and name.");
+    DlgChan(1,"Channel:",529);
+    DlgString(2,"Name of Neuron:",5);
+    ok% := DlgShow(inputchannel%[unitcounter%],neuronname$[unitcounter%]);
+    if not ok% then Halt(); endif;
+    burstfile%[unitcounter%]:=FileOpen(neuronname$[unitcounter%] + "_bursts.txt",1);
+    spikefile%[unitcounter%]:=FileOpen(neuronname$[unitcounter%] + "_spikes.txt",1);
+    if burstfile%[unitcounter%]<0 then 'if file doesn't exist, create ouput file
+        burstfile%[unitcounter%]:=FileNew(1);
+        FileSaveAs(neuronname$[unitcounter%] + "_bursts.txt",1);
+        endif;
+    FileClose();
+    if spikefile%[unitcounter%]<0 then 'if file doesn't exist, create ouput file
+        spikefile%[unitcounter%]:=FileNew(1);
+        FileSaveAs(neuronname$[unitcounter%] + "_spikes.txt",1);
+        endif;
+    FileClose();
+    next;
+outfile%:=FileOpen("analysis.txt",1);
+if outfile%<0 then 'if file doesn't exist, create output file
+    outfile%:=FileNew(1);
+    endif;
+FrontView(outfile%);
+var day$;
+day$:=Date$(2,2,1,1,".");
+Print("Experimenter: %s\nDate: %s\nManipulation: %s\nAnalyzed: %s\nComments: %s\n",experimenter$,dated$,manipulation$,day$,comment$);
+Print("Neurons Analyzed: %s",neuronname$[0]);
+for unitcounter%:=1 to nNeuron%-1 step 1 do
+    Print(",%s",neuronname$[unitcounter%]);
+    next;
+Print("\nFiles:\n"); WindowVisible(0);
+
+'***************************************************************************************************************************
+'***************************************************************************************************************************
+'***************************************************************************************************************************
+'PART TWO:
+
+'FIND SPIKES AND BURSTS FOR EACH FILE AND UNIT AND SAVE TO OUTPUT FILES
+
+'---------------------------------------------------------------------------------------------------------------------------
+
+'LOOP THROUGH ALL FILES IN THE FOLDER
+for fcount%:=0 to nFiles%-1 step 1 do 'go through and repeat for all files
+    fname$:=Fnames$[fcount%]; 'get current file name
+    okOpen%:=FileOpen(fname$,0,1); 'open current file
+    fend$:=FileName$(4); 'get end of file number
+    FrontView(okOpen%); WindowVisible(3); 'format window
+    XRange(0,60); Optimise(-1); HCursorDelete(-1); 'format window
+    ChanList(list%[]);
+    
+'---------------------------------------------------------------------------------------------------------------------------
+    
+'ANALYZE FILE #1    
+    if fcount%=0 then
+        
+        'LOOP THROUGH ALL NEURONS TO BE ANALYZED
+        for unitcounter%:=0 to nNeuron%-1 step 1 do ' for neurons 1 to # of neurons
+            eventchannel%[unitcounter%]:=MemChan(2); burstchannel%[unitcounter%]:=MemChan(5); 'create new memory channels for events and bursts
+            minthreshold[unitcounter%]:=0; maxthreshold[unitcounter%]:=0; 'set initial thresholds
+            ChanHide(-1); ChanShow(inputchannel%[unitcounter%]); 'show only current neuron and its spike and burst channels
+            XRange(0,60); Optimise(-1); HCursorDelete(-1); 'format window
+            
+            'GET SPIKES AND BURSTS
+            Message("Ready to analyze %s?",neuronname$[unitcounter%]); 'prompts user to say ok
+            okSpikes%:=2; okBursts%:=2;
+            while okSpikes%=2 do 'repeat until spikes are acceptable
+                GetThresholds(); 'set thresholds for min and max
+                GetSpikes(); 'get spikes and display in channel
+                okSpikes%:=Interact("What do you want to do?",504,0,"Detect Bursts","Repeat Spike Detection");
+                wend;
+            GetBursts(); 'get bursts and display channel
+            okBursts%:=Interact("What do you want to do?",504,0,"Save Bursts","Repeat Burst Detection");
+            while okBursts%=2 do 'repeat until bursts are acceptable
+                DlgCreate("Edit burst detection parameters.");
+                DlgReal(1,"Minimum delay between bursts (seconds):",0.0,10.0);
+                DlgInteger(2,"Minimum spikes per burst:",1,100);
+                DlgShow(spkInterval[unitcounter%],minSpike%[unitcounter%]);
+                GetBursts();
+                okBursts%:=Interact("What do you want to do?",504,0,"Save Bursts","Repeat Burst Detection");
+                wend;
+            next;
+        
+        'SAVE DATA AND CLOSE FILE
+        SaveData();
+        
+    else
+    
+'---------------------------------------------------------------------------------------------------------------------------
+    
+'ANALYZE FILE #2+
+        Message("Ready to analyze %s?",fname$); 'prompts user to say ok
+        ChanHide(-1);
+        
+        'GET SPIKES AND BURSTS BASED ON SETTINGS FROM PREVIOUS FILE
+        for unitcounter%:=0 to nNeuron%-1 step 1 do ' for neurons 1 to # of neurons
+            GetSpikes();
+            GetBursts();
+            next;
+        okSave%:=Interact("What do you want to do?",504,0,"Save Bursts","Repeat Spike Detection","Repeat Burst Detection","Skip File","Stop Script");
+        docase
+            
+        'TERMINATE SCRIPT OR SKIP FILE
+        case okSave%=5 then 'close script
+            FileClose(); FrontView(outfile%); 'log in outfile
+            Print("    %s not analyzed.\n",fname$); 'prints current filename
+            Print("    SCRIPT TERMINATED\n\n\n");
+            FileSaveAs("analysis.txt"); FileClose();
+            FrontView(App(3)); Halt();
+        case okSave%=4 then 'skip file
+            FileClose(); FrontView(outfile%);
+            Print("    "+fname$+" not analyzed.\n"); 'prints current filename
+            WindowVisible(0); 'hide window
+            
+        'SAVE DATA AND CLOSE FILE        
+        case okSave%=1 then 'save data
+            SaveData();
+            
+        'REANALYZE DATA FOR ALL NEURONS
+        case okSave%=2 then 'repeat analysis
+            for unitcounter%:=0 to nNeuron%-1 step 1 do ' for neurons 1 to # of neurons
+                ChanHide(-1); ChanShow(inputchannel%[unitcounter%]); 'show only current neuron and its spike and burst channels
+                XRange(0,60); Optimise(-1); HCursorDelete(-1); 'delete existing cursors
+                Message("Ready to analyze %s?",neuronname$[unitcounter%]); 'prompts user to say ok
+                okSpikes%:=2; okBursts%:=2;
+                while okSpikes%=2 do 'repeat until spikes are acceptable
+                    GetThresholds(); 'set thresholds for min and max
+                    GetSpikes(); 'get spikes and display in channel
+                    okSpikes%:=Interact("What do you want to do?",504,0,"Detect Bursts","Repeat Spike Detection");
+                    wend;
+                GetBursts(); 'get bursts and display channel
+                okBursts%:=Interact("What do you want to do?",504,0,"Save Bursts","Repeat Burst Detection");
+                while okBursts%=2 do 'repeat until bursts are acceptable
+                    DlgCreate("Edit burst detection parameters.");
+                    DlgReal(1,"Minimum delay between bursts (seconds):",0.0,10.0);
+                    DlgInteger(2,"Minimum spikes per burst:",1,100);
+                    DlgShow(spkInterval[unitcounter%],minSpike%[unitcounter%]);
+                    GetBursts();
+                    okBursts%:=Interact("What do you want to do?",504,0,"Save Bursts","Repeat Burst Detection");
+                    wend;
+                next;
+            SaveData();
+        case okSave%=3 then 'repeat analysis (bursts only)
+            for unitcounter%:=0 to nNeuron%-1 step 1 do ' for neurons 1 to # of neurons
+                ChanHide(-1); ChanShow(inputchannel%[unitcounter%]); 'show only current neuron and its spike and burst channels
+                XRange(0,60); Optimise(-1); HCursorDelete(-1); 'delete existing cursors
+                Message("Ready to analyze %s?",neuronname$[unitcounter%]); 'prompts user to say ok            
+                okBursts%:=2;
+                GetBursts(); 'get bursts and display channel
+                okBursts%:=Interact("What do you want to do?",504,0,"Save Bursts","Repeat Burst Detection");
+                while okBursts%=2 do 'repeat until bursts are acceptable
+                    DlgCreate("Edit burst detection parameters.");
+                    DlgReal(1,"Minimum delay between bursts (seconds):",0.0,10.0);
+                    DlgInteger(2,"Minimum spikes per burst:",1,100);
+                    DlgShow(spkInterval[unitcounter%],minSpike%[unitcounter%]);
+                    GetBursts();
+                    okBursts%:=Interact("What do you want to do?",504,0,"Save Bursts","Repeat Burst Detection");
+                    wend;
+                next;
+            SaveData();
+        endcase;
+    endif;
+    next;
+
+FrontView(outfile%); Print("\n\n"); FileSaveAs("analysis.txt"); FileClose();
+
+'***************************************************************************************************************************
+'***************************************************************************************************************************
+'***************************************************************************************************************************
+'PART THREE:
+
+'PROCEDURES TO GET SPIKES AND BURSTS
+
+'---------------------------------------------------------------------------------------------------------------------------
+
+'GETTHRESHOLDS
+proc GetThresholds()
+HCursorDelete(-1); 'delete existing cursors
+HCursorNew(inputchannel%[unitcounter%],minthreshold[unitcounter%]); 'place new cursor on channel
+HCursorLabel(4,1,"Min Threshold");
+Interact("Place the cursor at the minimum threshold for spike detection. This value may be positive or negative.",1023);
+minthreshold[unitcounter%]:= HCursor(1);'set min threshold
+HCursorNew(inputchannel%[unitcounter%],maxthreshold[unitcounter%]); 'place new cursor on channel
+HCursorLabel(4,2,"Max Threshold");
+Interact("Place the cursor at the maximum threshold for spikes. All spikes above this cursor will be excluded.",1023);
+maxthreshold[unitcounter%]:= HCursor(2); 'set max threshold
+end;
+
+'---------------------------------------------------------------------------------------------------------------------------
+
+'GETSPIKES
+proc GetSpikes()
+if minthreshold[unitcounter%]<0 then
+    mode%:=3 'spikes are falling
+else
+    mode%:=2 'spikes are rising
+endif;
+eTime:=MaxTime();
+ChanDelete(eventchannel%[unitcounter%]); eventchannel%[unitcounter%]:=MemChan(2); 'create new memory channel for spikes (and delete if one is already present)
+largeSpikes%:=MemChan(2); 'create new memory channel for large spikes
+MemImport(eventchannel%[unitcounter%],inputchannel%[unitcounter%],0,MaxTime(),mode%,mindelay%,minthreshold[unitcounter%]);
+MemImport(largeSpikes%,inputchannel%[unitcounter%],0,MaxTime(),mode%,mindelay%,maxthreshold[unitcounter%]);
+nLarge%:=ChanData(largeSpikes%,lrgSpikes[],0,MaxTime()); 'get large spike times
+for i%:=0 to nLarge%-1 step 1 do
+    MemDeleteTime(eventchannel%[unitcounter%],1,lrgSpikes[i%],0.005);
+    next;
+ChanDelete(largeSpikes%);
+ChanShow(eventchannel%[unitcounter%],inputchannel%[unitcounter%]);
+ChanOrder(inputchannel%[unitcounter%],-1,eventchannel%[unitcounter%]);
+ChanTitle$(eventchannel%[unitcounter%],neuronname$[unitcounter%]+"spikes"); 'name channel
+DrawMode(eventchannel%[unitcounter%],2); 'shows spikes as lines on the channel
+end;
+
+'---------------------------------------------------------------------------------------------------------------------------
+
+'GETBURSTS
+proc GetBursts()
+ChanDelete(burstchannel%[unitcounter%]); burstchannel%[unitcounter%]:=MemChan(5); 'create new memory channel for bursts (and delete if one is already present)
+nBursts%[unitcounter%]:=BurstMake(burstchannel%[unitcounter%],eventchannel%[unitcounter%],0,MaxTime(),spkInterval[unitcounter%],spkInterval[unitcounter%],minSpike%[unitcounter%]);
+
+'COUNT SINGLE SPIKES IF NECESSARY
+if minSpike%[unitcounter%]=1 then
+    singleburst%:=MemChan(5); 'create new memory channel to temporarily store single spike bursts
+    nSpikes%[unitcounter%]:=ChanData(eventchannel%[unitcounter%],spikeTimes[],0,MaxTime());
+    code%[0]:=1;
+    'ADD SINGLE SPIKES TO TEMPORARY CHANNEL
+    for printer%:=0 to nSpikes%[unitcounter%]-1 do
+        MemSetItem(singleburst%,0,spikeTimes[printer%]);
+        MemSetItem(singleburst%,0,spikeTimes[printer%]+0.0001,code%[]);
+        next;
+    'DELETE SINGLE SPIKES THAT ARE ALREADY WITHIN A BURST OF 2+ SPIKES
+    MarkMask(burstchannel%[unitcounter%],-1,1,-1); 'reset
+    MarkMask(burstchannel%[unitcounter%],0,-1,-1); 'all off
+    MarkMask(burstchannel%[unitcounter%],0,1,0); 'turn on starts (00) 
+    ChanData(burstchannel%[unitcounter%],burststart[],0,MaxTime()); 'record burst start times
+    MarkMask(burstchannel%[unitcounter%],-1,1,-1); 'reset
+    MarkMask(burstchannel%[unitcounter%],0,-1,-1); 'all off
+    MarkMask(burstchannel%[unitcounter%],0,1,1); 'turn on ends (01)
+    ChanData(burstchannel%[unitcounter%],burstend[],0,MaxTime()); 'record burst end times
+    for printer%:=0 to nBursts%[unitcounter%]-1 do
+        MemDeleteTime(singleburst%,3,burststart[printer%],burstend[printer%]+0.0002);
+        MemSetItem(singleburst%,0,burststart[printer%]);
+        MemSetItem(singleburst%,0,burstend[printer%],code%[]);
+        next;
+    ChanDelete(burstchannel%[unitcounter%]); 'delete old burst channel
+    burstchannel%[unitcounter%]:=ChanDuplicate(singleburst%); 'save single burst channel as normal burst channel
+endif;
+
+ChanShow(burstchannel%[unitcounter%],eventchannel%[unitcounter%],inputchannel%[unitcounter%]);
+ChanTitle$(burstchannel%[unitcounter%],neuronname$[unitcounter%]+"bursts"); 'name channel
+ChanOrder(inputchannel%[unitcounter%],-1,eventchannel%[unitcounter%]);
+ChanOrder(eventchannel%[unitcounter%],-1,burstchannel%[unitcounter%]);
+end;
+'---------------------------------------------------------------------------------------------------------------------------
+
+'SAVEDATA
+proc SaveData()
+for unitcounter%:=0 to nNeuron%-1 step 1 do ' for neurons 1 to # of neurons
+    
+    'FIND BURST START AND END TIMES
+    MarkMask(burstchannel%[unitcounter%],-1,1,-1); 'reset
+    MarkMask(burstchannel%[unitcounter%],0,-1,-1); 'all off
+    MarkMask(burstchannel%[unitcounter%],0,1,0); 'turn on starts (00) 
+    nBursts%[unitcounter%]:=ChanData(burstchannel%[unitcounter%],burststart[],0,MaxTime()); 'record burst start times
+    MarkMask(burstchannel%[unitcounter%],-1,1,-1); 'reset
+    MarkMask(burstchannel%[unitcounter%],0,-1,-1); 'all off
+    MarkMask(burstchannel%[unitcounter%],0,1,1); 'turn on ends (01)
+    ChanData(burstchannel%[unitcounter%],burstend[],0,MaxTime()); 'record burst end times
+    
+    'FIND SPIKE COUNT
+    for printer%:=0 to nBursts%[unitcounter%]-1 do
+        spikeCount%[printer%]:=ChanData(eventchannel%[unitcounter%],burstSpikes[],burststart[printer%],burstend[printer%]);
+        next;
+    
+    'OUTPUT MANIPULATION, FILE SUFFIX, AND SPIKETIMES TO SPIKEFILE
+    nSpikes%[unitcounter%]:=ChanData(eventchannel%[unitcounter%],spikeTimes[],0,MaxTime());
+    spikefile%[unitcounter%]:=FileOpen(neuronname$[unitcounter%] + "_spikes.txt",1);
+    FrontView(spikefile%[unitcounter%]);
+    for printer%:=0 to nSpikes%[unitcounter%]-1 step 1 do
+        Print("%s,%s,%f\n",manipulation$,fend$,spikeTimes[printer%]); 'print manipulation, file suffix, spike times for all spikes
+        next;
+    FileSave();FileClose();
+    
+    'OUTPUT MANIPULATION, FILE SUFFIX, BURST START, BURST END, AND SPIKE COUNT TO BURSTFILE
+    burstfile%[unitcounter%]:=FileOpen(neuronname$[unitcounter%] + "_bursts.txt",1);
+    
+    'OUTPUT DATA
+    FrontView(burstfile%[unitcounter%]);
+    for printer%:=0 to nBursts%[unitcounter%]-1 step 1 do
+        Print("%s,%s,%f,%f,%d\n",manipulation$,fend$,burststart[printer%],burstend[printer%],spikeCount%[printer%]);
+        next;
+    FileSave();FileClose();
+    
+    'SAVE SPIKE AND BURST MEMORY CHANNELS
+    MemSave(eventchannel%[unitcounter%],list%[0]+(2*unitcounter%)+1); 'save spike channel into the smr file
+    MemSave(burstchannel%[unitcounter%],list%[0]+(2*unitcounter%)+2); 'save burst channel into the smr file
+    next;
+
+'RECORD ANALYSIS IN OUTFILE
+ChanShow(-1);
+FileClose(); FrontView(outfile%);
+Print("    "+fname$+" analyzed.\n"); 'prints current filename
+WindowVisible(0); 'hide window
+end;
