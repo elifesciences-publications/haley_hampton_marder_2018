@@ -39,11 +39,11 @@ Plotting data in MATLAB
 - `rectanglePlots.m` : produces colored boxes with saturation giving measure of rhtymicity
 
 Pool all experiments and plot in MATLAB
-- `pHCumululative.m` : accumulates all of the information from the `data.mat` files for each extracellular experiment included in the paper; produces all of the extracellular figures, saves data used in figures as `.csv` for statistics
-- `pHCumululativePTX.m` : accumulates all of the information from the `data.mat` files for each intracellular PTX experiment included in the paper; produces all of the intracellular figures, saves data used in figures as `.csv` for statistics
+- `pHCumulative.m` : accumulates all of the information from the `data.mat` files for each extracellular experiment included in the paper; produces all of the extracellular figures, saves data used in figures as `.csv` for statistics
+- `pHCumulativePTX.m` : accumulates all of the information from the `data.mat` files for each intracellular PTX experiment included in the paper; produces all of the intracellular figures, saves data used in figures as `.csv` for statistics
 
 Statistical analyses in R/RStudio and MATLAB
-- `statistics.R`: code to compute a One-Way Repeated Measures ANOVA with post-hoc Paired Samples T-Tests (Bonferonni-corrected) or a Two-Way Multivariate ANOVA with post-hoc Independent Samples T-Tests (Bonferonni-corrected); reads `.csv` files outputed from `pHCumululative.m` or `pHCumululativePTX.m` and saves statistical analyses as new `.csv` files
+- `statistics.R`: code to compute a One-Way Repeated Measures ANOVA with post-hoc Paired Samples T-Tests (Bonferonni-corrected) or a Two-Way Multivariate ANOVA with post-hoc Independent Samples T-Tests (Bonferonni-corrected); reads `.csv` files outputed from `pHCumulative.m` or `pHCumulativePTX.m` and saves statistical analyses as new `.csv` files
 - `formatStats.m` : reformats the `.csv` files produced in R to be more legible for figures; requires some tweeking in Microsoft Excel before being saved as an Adobe PDF for further cosmetic changes in Adobe Illustrator; no substantive utility
 
 
