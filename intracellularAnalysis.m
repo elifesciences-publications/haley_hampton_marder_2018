@@ -24,11 +24,11 @@ else
     info.channels = inputdlg({"PD Channel","LP Channel"},"Define Channels"); % get channel names
     info.order = questdlg("Which protocol order was used?","Acid of Base First","AB","BA","AB"); % get protocol order
     if strcmp(info.order,"AB")
-        info.conditions = {'pH 8.2','pH 7.6','pH 7.0','pH 6.4','pH 5.9',...
-            'pH 8.2','pH 9.0','pH 9.6','pH 10.1','pH 10.6','pH 11.1','pH 8.2'}';
+        info.conditions = {'pH 7.8','pH 7.2','pH 6.7','pH 6.1','pH 5.5',...
+            'pH 7.8','pH 8.3','pH 8.8','pH 9.3','pH 9.8','pH 10.4','pH 7.8'}';
     else
-        info.conditions = {'pH 8.2','pH 9.0','pH 9.6','pH 10.1','pH 10.6','pH 11.1',...
-            'pH 8.2','pH 7.6','pH 7.0','pH 6.4','pH 5.9','pH 8.2'}';
+        info.conditions = {'pH 7.8','pH 8.3','pH 8.8','pH 9.3','pH 9.8','pH 10.4',...
+            'pH 7.8','pH 7.2','pH 6.7','pH 6.1','pH 5.5','pH 7.8'}';
     end
     
     for i = 1:length(info.conditions)

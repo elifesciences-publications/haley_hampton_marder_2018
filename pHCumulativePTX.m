@@ -89,17 +89,18 @@ end
 
 %% Export csvs for statistical analysis in R
 
-pH_vars = {'pH82_1' 'pH59' 'pH64' 'pH70' 'pH76' 'pH82_2' 'pH82_3' 'pH90'...
-    'pH96' 'pH101' 'pH106' 'pH110' 'pH82_4'};
+pH_vars = {'pH78_1' 'pH55' 'pH61' 'pH67' 'pH72' 'pH78_2' 'pH78_3' 'pH83'...
+    'pH88' 'pH93' 'pH98' 'pH104' 'pH78_4'};
 path = '/Volumes/HardDrive/Haley Hampton Marder 2018/Data/';
 
 for i = 1:length(measures)
     for j = 1:numPrep
         output.(measures{i})(j,:) = mean(violin.(measures{i})(numBin*(j-1)+1:numBin*j,:));
-        writetable(array2table(output.(measures{i}),'VariableNames',pH_vars),[path,measures{i},'.csv']);
-
     end
+    writetable(array2table(output.(measures{i}),'VariableNames',pH_vars),[path,measures{i},'.csv']);
 end
+
+
 
 %% Save data
 

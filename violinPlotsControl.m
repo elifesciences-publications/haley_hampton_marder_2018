@@ -5,18 +5,16 @@ function [] = violinPlotsControl(dadata)
 % Number of preps conditions (should be 15)
 n = size(dadata,2);
 
-% Define colors that match my other figures
-% plotColors = [191,255,64;199,0,0;255,29,0;255,118,0;255,232,0;191,255,64;...
-%     191,255,64;39,255,206;0,207,255;0,100,255;0,35,255;0,0,237;191,255,64]./255;
-
 % Determine width of violin plots based on max KDE for all conditions
 for i = 1:n
     bw = max(abs(dadata(:,i)))/20;
     [density,value] = ksdensity(dadata(:,i),'BandWidth',bw);
     densityMax(i) = max(density);
     valueMax(i) = max(value);
+    valueMin(i) = min(value);
 end
-% width = 0.45/max(densityMax);
+[densityMaxMax,i] = max(densityMax);
+density2Max = densityMax; density2Max(i) = [];
 width = 0.43./densityMax;
 limits = [min(valueMin) max(valueMax)];
 
@@ -33,7 +31,7 @@ for i = 1:n
     thisdata = dadata(:,i);
     
     % Calculate kernel density estimation for the violin
-    bw = max(thisdata)/20;
+    bw = max(abs(dadata(:,i)))/20;
     [density, value] = ksdensity(thisdata,'BandWidth',bw);
     density = density(value >= min(thisdata) & value <= max(thisdata));
     value = value(value >= min(thisdata) & value <= max(thisdata));
@@ -43,10 +41,6 @@ for i = 1:n
     end
 
     % Plot Violins of KDEs
-    if i == 1 || 13 % plot white distribution if on gray background
-        fill([i+density*width(i) i-density(end:-1:1)*width(i)],...
-            [value value(end:-1:1)],'w','FaceAlpha',1,'EdgeAlpha',0);
-    end
     fill([i+density*width(i) i-density(end:-1:1)*width(i)], ...
         [value value(end:-1:1)], 'k',...
         'FaceAlpha',0.3,'EdgeColor','k','EdgeAlpha',1,'LineWidth',1);
@@ -58,8 +52,8 @@ for i = 1:n
     else % all data is identical:
         meanDensity = density;
     end
-    plot([i-meanDensity*width i+meanDensity*width],[meanValue meanValue],...
-        'k','LineWidth',3);
+    plot([i-meanDensity*width(i) i+meanDensity*width(i)],...
+        [meanValue meanValue],'k','LineWidth',3);
     
     % Plot Quartiles (25%,75%)
     quartiles = quantile(thisdata, [0.25, 0.5, 0.75]);

@@ -1,4 +1,4 @@
-function [] = violinPlots(dadata)
+function [] = stackedBarPlots(dadata)
 %Given a 2D matrix with columns as pH conditions and rows as data points of
 %equal weight, this plots violin plots specific for my experiments
 
@@ -15,7 +15,6 @@ for i = 1:n
     if min(dadata(:,i)) < 0
         bw = min(dadata(:,i))/-20;
     end
-%     [density,value] = ksdensity(dadata(:,i));
     [density,value] = ksdensity(dadata(:,i),'BandWidth',bw);
     densityMax(i) = max(density);
     valueMax(i) = max(value);
@@ -24,12 +23,6 @@ end
 [densityMaxMax,i] = max(densityMax);
 density2Max = densityMax; density2Max(i) = [];
 width = 0.43./densityMax;
-% if densityMaxMax > 10*max(density2Max)
-%     width(1:n) = 0.43/max(density2Max);
-%     width(i) = 0.43/densityMaxMax;
-% else
-%     width(1:n) = 0.43/max(densityMax);
-% end
 limits = [min(valueMin) max(valueMax)];
 
 % Make Figure and add gray patches for recovery and line to separate ramps
@@ -38,8 +31,8 @@ hold on
 xlim([0.5 13.5])
 ylim([limits])
 xticks([1:13])
-xticklabels({'8.2','5.9','6.4','7.0','7.6','8.2',...
-    '8.2','9.0','9.6','10.1','10.6','11.0','8.2'})
+xticklabels({'7.8','5.5','6.1','6.7','7.2','7.8',...
+    '7.8','8.3','8.8','9.3','9.8','10.4','7.8'})
 xlabel('pH')
 patch([0.5 1.5 1.5 0.5],[-100 -100 100 100],'k','FaceAlpha',0.2,'EdgeAlpha',0);
 patch([12.5 13.5 13.5 12.5],[-100 -100 100 100],'k','FaceAlpha',0.2,'EdgeAlpha',0);

@@ -36,11 +36,11 @@ info.order = questdlg("Which protocol order was used?","Acid of Base First",...
 
 % ask for missing conditions, otherwise, order is assumed
 if strcmp(info.order,"AB")
-    info.conditions = {'pH 8.2','pH 7.6','pH 7.0','pH 6.4','pH 5.9',...
-        'pH 8.2','pH 9.0','pH 9.6','pH 10.1','pH 10.6','pH 11.1','pH 8.2'}';
+    info.conditions = {'pH 7.8','pH 7.2','pH 6.7','pH 6.1','pH 5.5',...
+        'pH 7.8','pH 8.3','pH 8.8','pH 9.3','pH 9.8','pH 10.4','pH 7.8'}';
 else
-    info.conditions = {'pH 8.2','pH 9.0','pH 9.6','pH 10.1','pH 10.6','pH 11.1',...
-        'pH 8.2','pH 7.6','pH 7.0','pH 6.4','pH 5.9','pH 8.2'}';
+    info.conditions = {'pH 7.8','pH 8.3','pH 8.8','pH 9.3','pH 9.8','pH 10.4',...
+        'pH 7.8','pH 7.2','pH 6.7','pH 6.1','pH 5.5','pH 7.8'}';
 end
 missingCondition = questdlg("Are any of the conditions missing?","Missing Condition",...
     'yes','no','no');
@@ -72,9 +72,9 @@ for i = 1:length(info.fileOrder)
         recTime(i,3) = recTime(i,2) - recTime(i,1); % file length
         recTime(i,4) = recTime(i,1) - recTime(1,1); % file offset
         
-        [pH_avg,pH_min,pH_sec,T_sec] = convertpH (abf);
-        data.(condition).pH = pH_sec';
-        data.(condition).temp = T_sec';
+%         [pH_avg,pH_min,pH_sec,T_sec] = convertpH (abf);
+%         data.(condition).pH = pH_sec';
+%         data.(condition).temp = T_sec';
     end
 end
 info.sampleFreq = 1000/abf.time(2); % sampling frequency
@@ -94,7 +94,7 @@ for i = 1:length(unitsToAnalyze)
     output.spikes = output.spikes*info.spikeScaleFactor;
     
     % Retrieve State Analysis
-    if strcmp(info.units{1}(1:2),'CG')
+    if strcmp(info.units{i}(1:2),'CG')
         analysis = xlsread('stateData_CG.xlsx',[experimentName,'_',unit(1:3)]);
     else
         analysis = xlsread('stateData_STG.xlsx',experimentName);
@@ -119,7 +119,7 @@ for i = 1:length(unitsToAnalyze)
         currentAnalysis = analysis(includeState,[2:3]);
         for k = 1:info.fileLength(j)
             currentState = max(find(currentAnalysis(:,1) < k));
-            data.(condition).state(k,1) = currentAnalysis(currentState,2);
+            data.(condition).(unit).state(k,1) = currentAnalysis(currentState,2);
         end
         
         for k = 1:length(measures)

@@ -11,7 +11,7 @@ rm(list = ls())
 # Input Directory, Filename, and Test type (1 or 2)
 directory = "/Volumes/HardDrive/Haley Hampton Marder 2018/Data"
 directory_out = "/Volumes/HardDrive/Haley Hampton Marder 2018/Statistics"
-filename = 'PD_waveFreq.csv'
+filename = 'PD_waveMin.csv'
 test = 1 # type 1 for one-way ANOVa, 2 for two-way
 
 # ------------------------------------------------------------------
@@ -30,9 +30,9 @@ data.csv = read.csv(filename)
 if (test==1){
 
 # Prepare 1-Way ANOVAs
-acid.lm=lm(cbind(pH59,pH64,pH70,pH76,pH82_2)~1,data=data.csv)
+acid.lm=lm(cbind(pH55,pH61,pH67,pH72,pH78_2)~1,data=data.csv)
 acid.i=expand.grid(pH=gl(5,1))
-base.lm=lm(cbind(pH82_3,pH90,pH96,pH101,pH106,pH110)~1,data=data.csv)
+base.lm=lm(cbind(pH78_3,pH83,pH88,pH93,pH98,pH104)~1,data=data.csv)
 base.i=expand.grid(pH=gl(6,1))
 
 # Compute 1-Way ANOVAs (separate tests for acid and base)
@@ -48,23 +48,23 @@ rownames(one_anova) <- c("acid","base")
 one_anova <- as.table(one_anova)
 
 # Compute Paired T-Tests
-t_59 = t.test(data.csv$pH82_2,data.csv$pH59, paired = TRUE)
-t_64 = t.test(data.csv$pH82_2,data.csv$pH64, paired = TRUE)
-t_70 = t.test(data.csv$pH82_2,data.csv$pH70, paired = TRUE)
-t_76 = t.test(data.csv$pH82_2,data.csv$pH76, paired = TRUE)
-t_90 = t.test(data.csv$pH82_3,data.csv$pH90, paired = TRUE)
-t_96 = t.test(data.csv$pH82_3,data.csv$pH96, paired = TRUE)
-t_101 = t.test(data.csv$pH82_3,data.csv$pH101, paired = TRUE)
-t_106 = t.test(data.csv$pH82_3,data.csv$pH106, paired = TRUE)
-t_110 = t.test(data.csv$pH82_3,data.csv$pH110, paired = TRUE)
+t_55 = t.test(data.csv$pH78_2,data.csv$pH55, paired = TRUE)
+t_61 = t.test(data.csv$pH78_2,data.csv$pH61, paired = TRUE)
+t_67 = t.test(data.csv$pH78_2,data.csv$pH67, paired = TRUE)
+t_72 = t.test(data.csv$pH78_2,data.csv$pH72, paired = TRUE)
+t_83 = t.test(data.csv$pH78_3,data.csv$pH83, paired = TRUE)
+t_88 = t.test(data.csv$pH78_3,data.csv$pH88, paired = TRUE)
+t_93 = t.test(data.csv$pH78_3,data.csv$pH93, paired = TRUE)
+t_98 = t.test(data.csv$pH78_3,data.csv$pH98, paired = TRUE)
+t_104 = t.test(data.csv$pH78_3,data.csv$pH104, paired = TRUE)
 
 # Produce Paired T-Test Output Table
-paired_t = matrix(c(t_59$statistic,t_64$statistic,t_70$statistic,t_76$statistic,t_90$statistic,
-                   t_96$statistic,t_101$statistic,t_106$statistic,t_110$statistic,
-                   t_59$p.value*4,t_64$p.value*4,t_70$p.value*4,t_76$p.value*4,t_90$p.value*5,
-                   t_96$p.value*5,t_101$p.value*5,t_106$p.value*5,t_110$p.value*5),nrow=9,ncol=2)
+paired_t = matrix(c(t_55$statistic,t_61$statistic,t_67$statistic,t_72$statistic,t_83$statistic,
+                   t_88$statistic,t_93$statistic,t_98$statistic,t_104$statistic,
+                   t_55$p.value*4,t_61$p.value*4,t_67$p.value*4,t_72$p.value*4,t_83$p.value*5,
+                   t_88$p.value*5,t_93$p.value*5,t_98$p.value*5,t_104$p.value*5),nrow=9,ncol=2)
 colnames(paired_t) <- c("T","p")
-rownames(paired_t) <- c("pH 5.9","pH 6.4","pH 7.0","pH 7.6","pH 9.0","pH 9.6","pH 10.1","pH 10.6","pH 11.0")
+rownames(paired_t) <- c("pH 5.5","pH 6.1","pH 6.7","pH 7.2","pH 8.3","pH 8.8","pH 9.3","pH 9.8","pH 10.4")
 paired_t <- as.table(paired_t)
 
 # Save Output Tables
@@ -81,9 +81,9 @@ write.csv(paired_t, file = paste(directory_out,"T_Tests",filename,sep = "/"))
 
 # Prepare 2-Way ANOVAs
 g = factor(data.csv$Ganglion)
-acid.lm=lm(cbind(pH59,pH64,pH70,pH76,pH82_2)~g,data=data.csv)
+acid.lm=lm(cbind(pH55,pH61,pH67,pH72,pH78_2)~1,data=data.csv)
 acid.i=expand.grid(pH=gl(5,1))
-base.lm=lm(cbind(pH82_3,pH90,pH96,pH101,pH106,pH110)~g,data=data.csv)
+base.lm=lm(cbind(pH78_3,pH83,pH88,pH93,pH98,pH104)~1,data=data.csv)
 base.i=expand.grid(pH=gl(6,1))
 
 # Compute 2-Way ANOVAs
@@ -101,25 +101,25 @@ rownames(two_anova) <- c("acid:ganglion","acid:pH","acid:ganglion*pH","base:gang
 two_anova <- as.table(two_anova)
 
 # Independent Samples T-tests
-t_59 = t.test(data.csv$pH59~g)
-t_64 = t.test(data.csv$pH64~g)
-t_70 = tryCatch(t.test(data.csv$pH70~g),error=function(cond)
+t_55 = t.test(data.csv$pH55~g)
+t_61 = t.test(data.csv$pH61~g)
+t_67 = tryCatch(t.test(data.csv$pH67~g),error=function(cond)
   list("statistic" = NA,p.value = NA))
-t_76 = tryCatch(t.test(data.csv$pH76~g),error=function(cond)
+t_72 = tryCatch(t.test(data.csv$pH72~g),error=function(cond)
   list("statistic" = NA,p.value = NA))
-t_90 = t.test(data.csv$pH90~g)
-t_96 = t.test(data.csv$pH96~g)
-t_101 = t.test(data.csv$pH101~g)
-t_106 = t.test(data.csv$pH106~g)
-t_110 = t.test(data.csv$pH110~g)
+t_83 = t.test(data.csv$pH83~g)
+t_88 = t.test(data.csv$pH88~g)
+t_93 = t.test(data.csv$pH93~g)
+t_98 = t.test(data.csv$pH98~g)
+t_104 = t.test(data.csv$pH104~g)
 
 # Produce Independent T-Test Output Table
-independent_t = matrix(c(t_59$statistic,t_64$statistic,t_70$statistic,t_76$statistic,t_90$statistic,
-                    t_96$statistic,t_101$statistic,t_106$statistic,t_110$statistic,
-                    t_59$p.value*4,t_64$p.value*4,t_70$p.value*4,t_76$p.value*4,t_90$p.value*5,
-                    t_96$p.value*5,t_101$p.value*5,t_106$p.value*5,t_110$p.value*5),nrow=9,ncol=2)
+independent_t = matrix(c(t_55$statistic,t_61$statistic,t_67$statistic,t_72$statistic,t_83$statistic,
+                    t_88$statistic,t_93$statistic,t_98$statistic,t_104$statistic,
+                    t_55$p.value*4,t_61$p.value*4,t_67$p.value*4,t_72$p.value*4,t_83$p.value*5,
+                    t_88$p.value*5,t_93$p.value*5,t_98$p.value*5,t_104$p.value*5),nrow=9,ncol=2)
 colnames(independent_t) <- c("T","p")
-rownames(independent_t) <- c("pH 5.9","pH 6.4","pH 7.0","pH 7.6","pH 9.0","pH 9.6","pH 10.1","pH 10.6","pH 11.0")
+rownames(independent_t) <- c("pH 5.5","pH 6.1","pH 6.7","pH 7.2","pH 8.3","pH 8.8","pH 9.3","pH 9.8","pH 10.4")
 independent_t <- as.table(independent_t)
 
 # Save Output Tables
