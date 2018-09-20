@@ -17,7 +17,7 @@ I used the following software for analysis and figure production:
 
 ## File List
 
-Read `.abf` files in MATLAB
+<b> Read `.abf` files in MATLAB </b>
 - `abfload.m` : reads a `.abf` file (produced in pClamp) and produces a basic MATLAB structure
 - `Loadabf.m` : wrapper for `abfload.m`; produces a more organized MATLAB struture for reading `.abf` files
 
