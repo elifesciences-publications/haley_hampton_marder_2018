@@ -51,7 +51,7 @@ I used the following software for analysis and figure production:
 
 - Paper:
 - Data Repository: https://osf.io/r7aes/
-- Git Repository: https://github.com/jesshaley/haley_2018
+- Git Repository: https://github.com/jesshaley/haley_hampton_marder_2018
 - Related projects: https://github.com/marderlab
 
   
