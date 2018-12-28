@@ -1,5 +1,5 @@
-# haley_hampton_marder_2019
-> Analysis package for the paper Haley, Hampton, and Marder (2019)
+# haley_hampton_marder_2018
+> Analysis package for the paper Haley, Hampton, and Marder (2018)
 
 These codes were written and used to analyze intracellular waveforms and extracellular nerve recordings from bursting neurons. Custom violin and stacked bar graph plotting scripts are included. This package is comprehensive and includes all codes used for this paper. Some of these codes are only useful for this particular set of experiments and will need to be adapted for other uses.
 
@@ -51,7 +51,7 @@ I used the following software for analysis and figure production:
 
 - Paper:
 - Data Repository: https://osf.io/r7aes/
-- Git Repository: https://github.com/jesshaley/haley_hampton_marder_2019
+- Git Repository: https://github.com/jesshaley/haley_hampton_marder_2018
 - Related projects: https://github.com/marderlab
 
   
