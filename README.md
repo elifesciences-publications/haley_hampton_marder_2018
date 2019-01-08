@@ -49,7 +49,7 @@ I used the following software for analysis and figure production:
 
 ## Links
 
-- Paper:
+- Paper: https://elifesciences.org/articles/41877
 - Data Repository: https://osf.io/r7aes/
 - Git Repository: https://github.com/jesshaley/haley_hampton_marder_2018
 - Related projects: https://github.com/marderlab
